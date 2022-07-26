@@ -1,6 +1,6 @@
 %YAML 1.1
 %TAG !u! tag:unity3d.com,2011:
---- !u!1 &6730018244298771005
+--- !u!1 &5311255821679811418
 GameObject:
   m_ObjectHideFlags: 0
   m_CorrespondingSourceObject: {fileID: 0}
@@ -8,48 +8,48 @@ GameObject:
   m_PrefabAsset: {fileID: 0}
   serializedVersion: 6
   m_Component:
-  - component: {fileID: 6730018244298771006}
-  - component: {fileID: 6730018244298770880}
-  - component: {fileID: 6730018244298771007}
-  - component: {fileID: 3830046822205487784}
-  - component: {fileID: 4058622528473486679}
+  - component: {fileID: 4827453815336927712}
+  - component: {fileID: 8453630602137833029}
+  - component: {fileID: 5959849416157100687}
+  - component: {fileID: 5004685378834322620}
+  - component: {fileID: 5004685378834322621}
   m_Layer: 0
-  m_Name: bush
+  m_Name: Tree
   m_TagString: Growable
   m_Icon: {fileID: 0}
   m_NavMeshLayer: 0
   m_StaticEditorFlags: 0
   m_IsActive: 1
---- !u!4 &6730018244298771006
+--- !u!4 &4827453815336927712
 Transform:
   m_ObjectHideFlags: 0
   m_CorrespondingSourceObject: {fileID: 0}
   m_PrefabInstance: {fileID: 0}
   m_PrefabAsset: {fileID: 0}
-  m_GameObject: {fileID: 6730018244298771005}
-  m_LocalRotation: {x: 0, y: 0, z: 0, w: 1}
+  m_GameObject: {fileID: 5311255821679811418}
+  m_LocalRotation: {x: -0, y: -0.30723694, z: -0, w: 0.9516331}
   m_LocalPosition: {x: 0, y: 0, z: 0}
-  m_LocalScale: {x: 1, y: 1, z: 1}
-  m_ConstrainProportionsScale: 0
+  m_LocalScale: {x: 0.20000002, y: 0.20000002, z: 0.20000002}
+  m_ConstrainProportionsScale: 1
   m_Children: []
   m_Father: {fileID: 0}
   m_RootOrder: 0
-  m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
---- !u!33 &6730018244298770880
+  m_LocalEulerAnglesHint: {x: 0, y: -35.786, z: 0}
+--- !u!33 &8453630602137833029
 MeshFilter:
   m_ObjectHideFlags: 0
   m_CorrespondingSourceObject: {fileID: 0}
   m_PrefabInstance: {fileID: 0}
   m_PrefabAsset: {fileID: 0}
-  m_GameObject: {fileID: 6730018244298771005}
-  m_Mesh: {fileID: 7200813882020725636, guid: 8c17a84892533d9438ff5926398c1443, type: 3}
---- !u!23 &6730018244298771007
+  m_GameObject: {fileID: 5311255821679811418}
+  m_Mesh: {fileID: -7387706064836869012, guid: 8ef548cf1e99f954db5891e15bc4a8bf, type: 3}
+--- !u!23 &5959849416157100687
 MeshRenderer:
   m_ObjectHideFlags: 0
   m_CorrespondingSourceObject: {fileID: 0}
   m_PrefabInstance: {fileID: 0}
   m_PrefabAsset: {fileID: 0}
-  m_GameObject: {fileID: 6730018244298771005}
+  m_GameObject: {fileID: 5311255821679811418}
   m_Enabled: 1
   m_CastShadows: 1
   m_ReceiveShadows: 1
@@ -63,8 +63,8 @@ MeshRenderer:
   m_RenderingLayerMask: 1
   m_RendererPriority: 0
   m_Materials:
-  - {fileID: 2100000, guid: f98ad849a459d7c4e99815a416729760, type: 2}
-  - {fileID: 2100000, guid: e894d737df2b7fd43b17416ffa181c9c, type: 2}
+  - {fileID: 2100000, guid: 50903e1abbf05bb478d25884a6a74011, type: 2}
+  - {fileID: 2100000, guid: 81ce4e1da3a8b5e4b8e3fa40e25bf789, type: 2}
   m_StaticBatchInfo:
     firstSubMesh: 0
     subMeshCount: 0
@@ -86,34 +86,34 @@ MeshRenderer:
   m_SortingLayer: 0
   m_SortingOrder: 0
   m_AdditionalVertexStreams: {fileID: 0}
---- !u!64 &3830046822205487784
-MeshCollider:
+--- !u!136 &5004685378834322620
+CapsuleCollider:
   m_ObjectHideFlags: 0
   m_CorrespondingSourceObject: {fileID: 0}
   m_PrefabInstance: {fileID: 0}
   m_PrefabAsset: {fileID: 0}
-  m_GameObject: {fileID: 6730018244298771005}
+  m_GameObject: {fileID: 5311255821679811418}
   m_Material: {fileID: 0}
   m_IsTrigger: 0
   m_Enabled: 1
-  serializedVersion: 4
-  m_Convex: 1
-  m_CookingOptions: 30
-  m_Mesh: {fileID: 7200813882020725636, guid: 8c17a84892533d9438ff5926398c1443, type: 3}
---- !u!114 &4058622528473486679
+  m_Radius: 1.8720977
+  m_Height: 8.925316
+  m_Direction: 1
+  m_Center: {x: 0, y: 4.19191, z: 0}
+--- !u!114 &5004685378834322621
 MonoBehaviour:
   m_ObjectHideFlags: 0
   m_CorrespondingSourceObject: {fileID: 0}
   m_PrefabInstance: {fileID: 0}
   m_PrefabAsset: {fileID: 0}
-  m_GameObject: {fileID: 6730018244298771005}
+  m_GameObject: {fileID: 5311255821679811418}
   m_Enabled: 1
   m_EditorHideFlags: 0
   m_Script: {fileID: 11500000, guid: 3a8259fdf1a5e6543b43556bf83c7e77, type: 3}
   m_Name: 
   m_EditorClassIdentifier: 
   scaleCurve:
-  - serializedVersion: 2
+    serializedVersion: 2
     m_Curve:
     - serializedVersion: 3
       time: 0
@@ -136,6 +136,6 @@ MonoBehaviour:
     m_PreInfinity: 2
     m_PostInfinity: 2
     m_RotationOrder: 4
+  curvePoint: 0
   minScaleFactor: 0
   maxScaleFactor: 1
-  scaleMultiplier: 1

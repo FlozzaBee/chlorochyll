@@ -11,7 +11,8 @@ public class PlayerControls : MonoBehaviour
     //inputs
         //primary touch
     private InputAction touchPress; 
-    private InputAction touchPosition; 
+    private InputAction touchPosition;
+    private InputAction touchTap;
         //secondary touch
     private InputAction touchPress_1;
     private InputAction touchPosition_1;
@@ -19,6 +20,7 @@ public class PlayerControls : MonoBehaviour
     //external objects
     private PlayerInput playerInput;
     private Camera mainCamera;
+    private PlaceObject placeObject;
     GameObject targetedObject; //used to store which object has been tapped on
     [SerializeField]
     private CinemachineVirtualCamera virtualCamera; //must be assigned in editor to control zoom
@@ -43,8 +45,11 @@ public class PlayerControls : MonoBehaviour
     [Tooltip("Speed of the rotation around the pivot")]
     public float spinSmoothSpeed = 0.2f;
 
-    public float scaleAmountMultiplier = 0.5f;
-    public float scaleSmoothSpeed = 0.2f;
+    [Header("Grow control parameters")]
+    [Tooltip("how far you have to swipe to fully grow a plant, high number = less distance swiped, 1 = entire screen")]
+    [Range(0.5f,3f)] public float growSpeed = 1f;
+    //public float scaleAmountMultiplier = 0.5f;
+    //public float scaleSmoothSpeed = 0.2f;
 
     [Tooltip("how far the camera can move in and out of the scene")]
     [Header("Zoom Parameters")]
@@ -58,7 +63,9 @@ public class PlayerControls : MonoBehaviour
         touchPosition = playerInput.actions["TouchPosition"];
         touchPress_1 = playerInput.actions["TouchPress_1"];
         touchPosition_1 = playerInput.actions["TouchPosition_1"];
+        touchTap = playerInput.actions["TouchTap"];
         mainCamera = Camera.main;
+        placeObject = gameObject.GetComponent<PlaceObject>(); // gets the placeObject script assigned to this gameobject if one is present
         transposer = virtualCamera.GetCinemachineComponent<CinemachineFramingTransposer>(); //gets framing transposer component for use in zoom
     }
 
@@ -67,6 +74,7 @@ public class PlayerControls : MonoBehaviour
         touchPress.performed += StartTouch;
         touchPress.canceled += EndTouch;
         touchPress_1.performed += StartSecondaryTouch;
+        touchTap.performed += Tap;
     } 
 
     private void OnDisable()
@@ -74,6 +82,7 @@ public class PlayerControls : MonoBehaviour
         touchPress.performed -= StartTouch;
         touchPress.canceled -= EndTouch;
         touchPress_1.performed -= StartSecondaryTouch;
+        touchTap.performed -= Tap;
     }
 
     private void StartTouch(InputAction.CallbackContext context)
@@ -99,6 +108,7 @@ public class PlayerControls : MonoBehaviour
         Vector2 initialViewportPoint = mainCamera.ScreenToViewportPoint(touchPosition.ReadValue<Vector2>()); //gets the initial touch point
         Vector3 initialCameraController = cameraController.transform.eulerAngles; //gets the camera controllers initial rotation
         Vector3 initialScale = Vector3.zero; //defines initial scale to be used later
+        ScaleAgent scaleAgent = null; // defines the scale agent script of the targeted object 
 
         targetedObject = null; // resets the targeted object from previous tap
         Ray ray = mainCamera.ScreenPointToRay(touchPosition.ReadValue<Vector2>()); //casts ray to point touched 
@@ -109,11 +119,16 @@ public class PlayerControls : MonoBehaviour
             if (hit.collider.gameObject.tag == "Growable")
             {
                 targetedObject = hit.collider.gameObject;
-                initialScale = hit.collider.gameObject.transform.localScale; //if ray hits a growable object, store info about it
+                //initialScale = hit.collider.gameObject.transform.localScale; //if ray hits a growable object, store info about it
+                scaleAgent = targetedObject.GetComponent<ScaleAgent>(); //assigns scale agent to that of the target object
             }
         }
 
+        //for use in zoom
         float previousDistance = 0f, currentDistance = 0f;
+
+        //for use in scale / vertical swipe
+        Vector2 previousViewportPoint = Vector2.zero;
 
         while (isTouching) //repeats like an update while the screen is pressed 
         {
@@ -134,6 +149,7 @@ public class PlayerControls : MonoBehaviour
                     {
                         inputType = 'y';
                         inputIdentified = true;
+                        previousViewportPoint = mainCamera.ScreenToViewportPoint(touchPosition.ReadValue<Vector2>());
                     }
                 }
                 if (touchCount == 2)
@@ -155,20 +171,26 @@ public class PlayerControls : MonoBehaviour
                     Debug.Log("swipe direction y");
                     if (targetedObject != null)
                     {
-                        Grow(initialScale, deltaViewportPoint);
+
+                        float deltaY = currentViewportPoint.y - previousViewportPoint.y;
+                        scaleAgent.Scale(deltaY * growSpeed);
+                        previousViewportPoint = currentViewportPoint;
+
+                        //Grow(initialScale, deltaViewportPoint);
                     }
                 } // if verticle swipe was identified, and a growable object was targeted, scale that object by swipe amount
 
                 if(inputType == 'p')
                 {
+                    //pinch to zoom 
                     currentDistance = Vector2.Distance(mainCamera.ScreenToViewportPoint(touchPosition.ReadValue<Vector2>()), mainCamera.ScreenToViewportPoint(touchPosition_1.ReadValue<Vector2>()));
 
                     float targetPosition = transposer.m_CameraDistance;
                     targetPosition -= (currentDistance - previousDistance) * 40f;
-                    Debug.Log("targetPosition " + targetPosition);
+                    Debug.Log("targetPosition " + targetPosition); 
                     
                     transposer.m_CameraDistance = Mathf.Clamp(targetPosition, zoomMin, zoomMax); ;
-                    previousDistance = currentDistance; // cinemachine my beloved, you saved me
+                    previousDistance = currentDistance; // cinemachine my beloved, you saved me //gets change in pinchedness between current and previous frame, adds that to the camera distance
                 }
             }
 
@@ -185,16 +207,6 @@ public class PlayerControls : MonoBehaviour
             initialCameraController.z); //spinnnn 
     }
 
-    private void Grow(Vector3 initialScale, Vector2 deltaViewportPoint)
-    {
-        if (targetedObject.tag == "Growable")
-        {
-            float targetScale = initialScale.y + (deltaViewportPoint.y * scaleAmountMultiplier);
-            float newScale = Mathf.SmoothDamp(targetedObject.transform.localScale.y, targetScale, ref refScale, scaleSmoothSpeed);
-            targetedObject.transform.localScale = new Vector3(newScale, newScale, newScale);
-        }
-    }
-
     private void StartSecondaryTouch(InputAction.CallbackContext context)
     {
         Debug.Log("Secondary Touch Triggered " + touchPress_1.ReadValue<float>());
@@ -203,5 +215,18 @@ public class PlayerControls : MonoBehaviour
         initialViewportPoint_1 = mainCamera.ScreenToViewportPoint(touchPosition_1.ReadValue<Vector2>());
     }
 
+    private void Tap(InputAction.CallbackContext context)
+    {
+        Ray ray = mainCamera.ScreenPointToRay(touchPosition.ReadValue<Vector2>());
+        Debug.DrawRay(ray.origin, ray.direction * 10, Color.cyan, 1);
+        RaycastHit hit;
+        if (Physics.Raycast(ray, out hit))
+        {
+            if (hit.collider.gameObject.tag == "PlantableSurface" && placeObject != null) 
+            {
+                placeObject.Place(hit.point);
+            } // if player taps on a plantable surface, and the place object script is present on this gameobject, place an object
+        }
+    }
 
 }
