@@ -5,53 +5,30 @@ using UnityEngine;
 // rough prototype - currently functional, but I want to make it MORE functional
 public class ScaleAgent : MonoBehaviour
 {
-    
-    
-
     //internal  variables
-    [Range(0,1)]
-    private float currentScaleFactor = 0;
-    private Vector3[] initialScales;
-    private Transform[] objectHierarchy; // all of the gameObjects under the object this script is attached to, including this object
+    public float currentScaleFactor = 0; // public to be edited by editor script
 
-    //editor variables
-    [Tooltip("each part of the model needs a curve. defines how each part scales. i.e. if a scalecurve starts at 0.5, the corresponding object will only start scaling when the growable object is half way through growth")]
-    public AnimationCurve[] scaleCurve;
-    [Tooltip("multiplies how large a model can get, useful for small models that you want to grow B I G, or big models you want to keep small ")]
-    public float scaleMultiplier = 1f;
+    //editor script controlled variables
+    public GameObject[] objects; // array of all the game objects attached to this gameobject, including itself 
+    public float[] startScales; // array of each gameobjects scales as it first appears
+    public float[] endScales; // array of each gameobjects scales at maximum growth
+    public AnimationCurve[] scaleCurves;
+
 
     private void Start()
     {
-        objectHierarchy = GetComponentsInChildren<Transform>();
-        initialScales = new Vector3[objectHierarchy.Length]; // creates array of initial scales the same length as the number of objects in the hierarchy
-        int i = 0;
-        foreach (Transform trans in objectHierarchy)
-        {
-            initialScales[i] = trans.localScale;
-            i++;
-        }
-        
+        Scale(0); // resets object to start scale on creation
     }
 
-    public void Scale(float scaleAmount)
+    public void Scale(float scaleAmount) // input a vewport point delta since last frame to grow plant with drag, called in PlayerControls
     {
         currentScaleFactor += scaleAmount;
         currentScaleFactor = Mathf.Clamp(currentScaleFactor, 0, 1);
-        Debug.Log("scale factor " + currentScaleFactor);
-        /*
-        int i = 0;
-        foreach (Transform objTransform in objectHierarchy)
+        //Debug.Log("scale factor " + currentScaleFactor);
+        for (int i = 0; i < objects.Length; i++)
         {
-            float currentScale = scaleCurve[i].Evaluate(currentScaleFactor) * scaleMultiplier;
-            objTransform.localScale = initialScale + new Vector3(currentScale, currentScale, currentScale); 
-            i++;
-        } // scales each sub part of a model by its own unique curve :)
-        */
-        for (int i = 0; i < objectHierarchy.Length; i++)
-        {
-            float currentScale = scaleCurve[i].Evaluate(currentScaleFactor) * scaleMultiplier;
-            Debug.Log("curent scale curve" + scaleCurve[i].Evaluate(0.5f));
-            objectHierarchy[i].localScale = initialScales[i] + new Vector3(currentScale, currentScale, currentScale);
+            float currentScale = scaleCurves[i].Evaluate(currentScaleFactor);
+            objects[i].transform.localScale = new Vector3(currentScale, currentScale, currentScale);
         }
     }
 }

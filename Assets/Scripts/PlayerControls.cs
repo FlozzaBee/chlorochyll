@@ -30,6 +30,7 @@ public class PlayerControls : MonoBehaviour
     int touchCount;
     Vector2 initialViewportPoint_1;
     private CinemachineFramingTransposer transposer;
+    private Vector2 currentAvgPos, prevAvgPos;
 
     //smooth damp ref variables
     private float refSpin;
@@ -40,10 +41,18 @@ public class PlayerControls : MonoBehaviour
     public GameObject cameraController;
     [Tooltip("distance moved from from initial tap to register a swipe, 0 to 1")]
     public float swipeThreshold = 0.01f;
+    [Tooltip("swipe distance threshold for a two finger guesture to be registered")]
+    public float twoTouchThreshold = 0.01f;
     [Tooltip("How far a swipe rotates around the pivot")]
     public float spinAmountMultiplier = 200f;
     [Tooltip("Speed of the rotation around the pivot")]
     public float spinSmoothSpeed = 0.2f;
+
+    [Header("Vertical Movement")]
+    [Tooltip("How fast the vertical movement is")]
+    public float verticalSpeed = 0.5f;
+    [Tooltip("How far up and down the camera can move")]
+    public float minVerticalOffset = 3, maxVerticalOffset = 20;
 
     [Header("Grow control parameters")]
     [Tooltip("how far you have to swipe to fully grow a plant, high number = less distance swiped, 1 = entire screen")]
@@ -104,7 +113,7 @@ public class PlayerControls : MonoBehaviour
     IEnumerator SwipeUpdate()
     {
         bool inputIdentified = false; 
-        char inputType = '0'; //x for horizontal, y for vertical, p for pinch, 0 for unassigned/unidentified
+        char inputType = '0'; //x for horizontal, y for vertical, p for pinch, t for two finger swipe, 0 for unassigned/unidentified
         Vector2 initialViewportPoint = mainCamera.ScreenToViewportPoint(touchPosition.ReadValue<Vector2>()); //gets the initial touch point
         Vector3 initialCameraController = cameraController.transform.eulerAngles; //gets the camera controllers initial rotation
         Vector3 initialScale = Vector3.zero; //defines initial scale to be used later
@@ -127,8 +136,8 @@ public class PlayerControls : MonoBehaviour
         //for use in zoom
         float previousDistance = 0f, currentDistance = 0f;
 
-        //for use in scale / vertical swipe
-        Vector2 previousViewportPoint = Vector2.zero;
+        //used to store screen position from previous frame
+        Vector2 previousViewportPoint = Vector2.zero, previousViewportPoint_1 = Vector2.zero;
 
         while (isTouching) //repeats like an update while the screen is pressed 
         {
@@ -154,9 +163,30 @@ public class PlayerControls : MonoBehaviour
                 }
                 if (touchCount == 2)
                 {
-                    inputType = 'p';
-                    inputIdentified = true;
-                    previousDistance = Vector2.Distance(mainCamera.ScreenToViewportPoint(touchPosition.ReadValue<Vector2>()), mainCamera.ScreenToViewportPoint(touchPosition_1.ReadValue<Vector2>()));
+                    Vector2 currentViewportPoint_1 = mainCamera.ScreenToViewportPoint(touchPosition_1.ReadValue<Vector2>());
+                    Vector2 touchVector = initialViewportPoint - currentViewportPoint;
+                    Vector2 touchVector_1 = initialViewportPoint_1 - currentViewportPoint_1;
+
+                    if (touchVector.sqrMagnitude > twoTouchThreshold || touchVector_1.sqrMagnitude > twoTouchThreshold)
+                    {
+                        float dot = Vector2.Dot(touchVector.normalized, touchVector_1.normalized);
+                        Debug.Log("dot " + dot);
+
+                        if (dot < 0.6f)
+                        {
+                            inputType = 'p';
+                            inputIdentified = true;
+                            previousDistance = Vector2.Distance(mainCamera.ScreenToViewportPoint(touchPosition.ReadValue<Vector2>()), mainCamera.ScreenToViewportPoint(touchPosition_1.ReadValue<Vector2>()));
+                        }
+                        else
+                        {
+                            Debug.Log("two finger swipe");
+                            inputType = 't';
+                            inputIdentified = true;
+                            previousViewportPoint = mainCamera.ScreenToViewportPoint(touchPosition.ReadValue<Vector2>());
+                            previousViewportPoint_1 = mainCamera.ScreenToViewportPoint(touchPosition_1.ReadValue<Vector2>());
+                        }
+                    }
                 }
             }//finds the swipe direction by comparing it to a threshold
             else
@@ -187,10 +217,26 @@ public class PlayerControls : MonoBehaviour
 
                     float targetPosition = transposer.m_CameraDistance;
                     targetPosition -= (currentDistance - previousDistance) * 40f;
-                    Debug.Log("targetPosition " + targetPosition); 
+                    //Debug.Log("targetPosition " + targetPosition); 
                     
                     transposer.m_CameraDistance = Mathf.Clamp(targetPosition, zoomMin, zoomMax); ;
                     previousDistance = currentDistance; // cinemachine my beloved, you saved me //gets change in pinchedness between current and previous frame, adds that to the camera distance
+                }
+
+                if(inputType == 't')
+                {
+                    Vector2 currentViewportPoint_1 = mainCamera.ScreenToViewportPoint(touchPosition_1.ReadValue<Vector2>()); //sets currentviewportPoint_1 to the point your second finger is touching
+                    Vector2 averageTouchPosition = (currentViewportPoint + currentViewportPoint_1) / 2; //finds the average point between the two current finger points
+                    Vector2 previousAverageTouchPosition = (previousViewportPoint + previousViewportPoint_1) / 2; // finds the average point between teh previous frames two finger points
+                    Vector2 averageTouchDelta = previousAverageTouchPosition - averageTouchPosition; //previous frame average - current frame avg
+                    //Debug.Log("current avg touch " + averageTouchPosition);
+                    //Debug.Log("Previous avg touch " + previousAverageTouchPosition);
+                    transposer.m_TrackedObjectOffset.y += -averageTouchDelta.y * verticalSpeed; //adds delta y to offset
+                    transposer.m_TrackedObjectOffset.y = Mathf.Clamp(transposer.m_TrackedObjectOffset.y, minVerticalOffset, maxVerticalOffset);
+                    Debug.Log("transposer y offset " + transposer.m_TrackedObjectOffset.y);
+                    Debug.Log("clamped offset " + Mathf.Clamp(transposer.m_TrackedObjectOffset.y, minVerticalOffset, maxVerticalOffset));
+                    previousViewportPoint = currentViewportPoint; //sets previous frame viewportpoints to current frame viewport points
+                    previousViewportPoint_1 = currentViewportPoint_1; //so why doesnt it work ?? got it it was a set of brackets  
                 }
             }
 
@@ -227,6 +273,12 @@ public class PlayerControls : MonoBehaviour
                 placeObject.Place(hit.point);
             } // if player taps on a plantable surface, and the place object script is present on this gameobject, place an object
         }
+    }
+
+    private void OnDrawGizmosSelected()
+    {
+        Gizmos.color = Color.yellow;
+        Gizmos.DrawSphere(Camera.main.ViewportToWorldPoint(new Vector3(prevAvgPos.x, prevAvgPos.y, 10)), 0.2f);
     }
 
 }
