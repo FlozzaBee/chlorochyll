@@ -2,6 +2,7 @@ using System.Collections;
 using System.Collections.Generic;
 using UnityEngine;
 
+//this script is now obsolete, replaced with the Throw script
 public class PlaceObject : MonoBehaviour
 {
     [SerializeField] private GameObject plantPrefab;

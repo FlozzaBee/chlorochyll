@@ -31,6 +31,7 @@ public class PlayerControls : MonoBehaviour
     Vector2 initialViewportPoint_1;
     private CinemachineFramingTransposer transposer;
     private Vector2 currentAvgPos, prevAvgPos;
+    private int layerMask;
 
     //smooth damp ref variables
     private float refSpin;
@@ -65,6 +66,14 @@ public class PlayerControls : MonoBehaviour
     public float zoomMin = 1f;
     public float zoomMax = 30f;
 
+    [Header("Seed throwing")]
+    [Tooltip("The seed to be thrown")]
+    public GameObject seed;
+    [Tooltip("possible viewport to world X coords spawn locations")]
+    public float[] xSeedSpawnLocations = { -1f, 2f };
+    [Tooltip("range of viewport to world Y coords between which to spawn")]
+    public float minYseedSpawn = 0, maxYseedSpawn = 1;
+
     private void Awake()
     {
         playerInput = GetComponent<PlayerInput>();
@@ -76,6 +85,9 @@ public class PlayerControls : MonoBehaviour
         mainCamera = Camera.main;
         placeObject = gameObject.GetComponent<PlaceObject>(); // gets the placeObject script assigned to this gameobject if one is present
         transposer = virtualCamera.GetCinemachineComponent<CinemachineFramingTransposer>(); //gets framing transposer component for use in zoom
+
+        layerMask = 1 << 6;
+        layerMask = ~layerMask; //not 100% sure how layer masks work, but this should set it to exclude layer 6
     }
 
     private void OnEnable()
@@ -123,7 +135,7 @@ public class PlayerControls : MonoBehaviour
         Ray ray = mainCamera.ScreenPointToRay(touchPosition.ReadValue<Vector2>()); //casts ray to point touched 
         Debug.DrawRay(ray.origin, ray.direction * 10, Color.magenta, 1);
         RaycastHit hit;
-        if (Physics.Raycast(ray, out hit))
+        if (Physics.Raycast(ray, out hit, Mathf.Infinity, layerMask))
         {
             if (hit.collider.gameObject.tag == "Growable")
             {
@@ -266,12 +278,20 @@ public class PlayerControls : MonoBehaviour
         Ray ray = mainCamera.ScreenPointToRay(touchPosition.ReadValue<Vector2>());
         Debug.DrawRay(ray.origin, ray.direction * 10, Color.cyan, 1);
         RaycastHit hit;
-        if (Physics.Raycast(ray, out hit))
+        if (Physics.Raycast(ray, out hit, Mathf.Infinity, layerMask))
         {
-            if (hit.collider.gameObject.tag == "PlantableSurface" && placeObject != null) 
+            if (hit.collider.gameObject.tag == "PlantableSurface") 
             {
-                placeObject.Place(hit.point);
-            } // if player taps on a plantable surface, and the place object script is present on this gameobject, place an object
+                //placeObject.Place(hit.point);
+
+                Vector3 viewportSpawnLocation = new Vector3(xSeedSpawnLocations[Random.Range(0, xSeedSpawnLocations.Length)], Random.Range(minYseedSpawn, maxYseedSpawn), 1);
+
+                Vector3 startPosition = mainCamera.ViewportToWorldPoint(viewportSpawnLocation);
+                GameObject instantiated = Instantiate(seed, startPosition, Quaternion.Euler(0,0,0));
+                instantiated.GetComponent<Throw>().startThrow(hit.point);
+
+                Debug.Log(viewportSpawnLocation.x);
+            } // if player taps on a plantable surface, instantiate a seed and start the throw method on that seed, throwing it at the tapped spot
         }
     }
 
