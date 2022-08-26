@@ -2,7 +2,8 @@ using System.Collections;
 using System.Collections.Generic;
 using UnityEngine;
 
-// rough prototype - currently functional, but I want to make it MORE functional
+// Scales components of a model by custon defined scale curves
+// uses editor script to define scale curves
 public class ScaleAgent : MonoBehaviour
 {
     //internal  variables

@@ -7,7 +7,7 @@ public class StayWithinBox : MonoBehaviour
 {
     public GameObject targetGameObject;
 
-    private Rigidbody rigidbody;
+    new Rigidbody rigidbody;
     
 
     private void Start()

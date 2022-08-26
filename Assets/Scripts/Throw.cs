@@ -2,7 +2,7 @@ using System.Collections;
 using System.Collections.Generic;
 using UnityEngine;
 
-//throws a seed at a target location, called by PlayerControls tap
+//throws a seed at a target location, and instantiates the corresponding plant when it lands, called by PlayerControls tap
 public class Throw : MonoBehaviour
 {
     [Tooltip("Time for a seed to travel its thrown trajectory")]

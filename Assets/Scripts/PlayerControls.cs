@@ -3,7 +3,13 @@ using UnityEngine;
 using UnityEngine.InputSystem;
 using Cinemachine;
 
-
+//Processes all player touch input, detects gestures, and performs actions accordingly
+//Current functionality:
+//Tap - Throw seed
+//Horizontal swipe - Orbit
+//Verticle swipe (on plant) - Grow plant
+//Pinch - Zoom
+//Two finger swipe - Verticle pan
 [RequireComponent(typeof(PlayerInput))]
 public class PlayerControls : MonoBehaviour
 {
