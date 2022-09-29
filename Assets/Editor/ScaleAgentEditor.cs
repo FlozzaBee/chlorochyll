@@ -23,6 +23,9 @@ public class ScaleAgentEditor : Editor
     SerializedProperty endScales;
     SerializedProperty scaleCurves;
     SerializedProperty currentScaleFactor;
+
+    //Editor display data
+    private int[] hierarchyDepth;
     private void OnEnable()
     {
         objects = serializedObject.FindProperty("objects");
@@ -44,11 +47,14 @@ public class ScaleAgentEditor : Editor
         {
             //targetScript.objects = new GameObject[targetScript.GetComponentsInChildren<Transform>().Length];
             objects.arraySize = targetScript.GetComponentsInChildren<Transform>().Length;
+            hierarchyDepth = new int[targetScript.GetComponentsInChildren<Transform>().Length]; //creates an array of ints to store each gameobjects hierarchy depth value
             int i = 0;
             foreach (Transform transform in targetScript.GetComponentsInChildren<Transform>())
             {
                 //targetScript.objects[i] = transform.gameObject;
                 objects.GetArrayElementAtIndex(i).objectReferenceValue = transform.gameObject;
+
+                hierarchyDepth[i] = GetHierarchyIndex(i);
                 i++;
             }
 
@@ -153,7 +159,12 @@ public class ScaleAgentEditor : Editor
                 EditorGUILayout.BeginHorizontal();
                 SerializedProperty scaleCurve = (scaleCurves.GetArrayElementAtIndex(i)); // gets serialized property of just the current curve
 
-                GameObject obj = objects.GetArrayElementAtIndex(i).objectReferenceValue as GameObject; 
+                GameObject obj = objects.GetArrayElementAtIndex(i).objectReferenceValue as GameObject;
+                if (hierarchyDepth != null) 
+                {
+                    EditorGUI.indentLevel = hierarchyDepth[i]; 
+                } //Indents the scale curve fields depending on their depth within the hierarchy (i.e. a gameobject that is a child of the main object will be indented by 1, a child of that object will be indented 2. 
+                  //This helps identify which object needs which curve more easily
                 EditorGUILayout.PropertyField(scaleCurve, new GUIContent(obj.name)); //draws curve field with the corresponding gameobjects name as the lable
                                                                                                                                         //uses serialized properties to facilitate prefab saving. 
 
@@ -171,9 +182,15 @@ public class ScaleAgentEditor : Editor
                     GenerateCurve(i);
                 } // regenerates the curve back to the start scale > end scale curve
                 EditorGUILayout.EndHorizontal();
+
+                //Test button
+                //if (GUILayout.Button("Get Index"))
+                //{
+                //    GetHierarchyIndex(i);
+                //}
             }
         }
-        EditorGUILayout.HelpBox("i am an empty void, no shred of my humanity remains, i am a husk", MessageType.None);
+        //EditorGUILayout.HelpBox("i am an empty void, no shred of my humanity remains, i am a husk", MessageType.None); // <- this is how i felt when i finished writing this, it was my first editor script and it took a lot of research
 
         enableDebug = EditorGUILayout.Toggle("Enable Preview Mode", enableDebug);
         if (enableDebug)
@@ -201,6 +218,39 @@ public class ScaleAgentEditor : Editor
     {
         scaleCurves.GetArrayElementAtIndex(i).animationCurveValue = new AnimationCurve(new Keyframe(0, startScales.GetArrayElementAtIndex(i).floatValue), new Keyframe(1, endScales.GetArrayElementAtIndex(i).floatValue));
     } // generates and sets a curve from the start scale and end scale values.
+
+    private int GetHierarchyIndex(int i) //testing a way to check the depth of a gameobject in the hierarchy
+    {
+        GameObject obj = objects.GetArrayElementAtIndex(i).objectReferenceValue as GameObject; //gets the gameobject were interested in 
+        int depthIndex = 0; //the depth of the object under the main growable object (the bit with the scale script on)
+        bool depthFound = false; 
+        GameObject objParent = obj;
+
+        if (objParent.transform == targetScript.transform)
+        { depthIndex = 0; }
+
+        else
+        {
+            while (depthFound == false)
+            {
+                if (objParent.transform.parent == targetScript.transform) //if the objParent's parent is the object with the scale script, stop the while loop
+                {
+                    depthFound = true;
+                } //checks if the 
+                depthIndex++; //increase the depth index number
+                objParent = objParent.transform.parent.gameObject; //set the objParent to the previous objParents parent
+                if (depthIndex > 20)
+                {
+                    depthFound = true;
+                    Debug.LogError("Depth index above 20, depth check cancelled");
+                }
+            }
+        }
+        Debug.Log("depth index: " + depthIndex);
+        return (depthIndex);
+        
+    }
 }
+
 
 

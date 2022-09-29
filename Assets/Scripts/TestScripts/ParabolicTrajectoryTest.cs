@@ -5,6 +5,7 @@ using UnityEngine;
 //test script used to investigate different methods of creating curved/arched trajectories
 public class ParabolicTrajectoryTest : MonoBehaviour
 {
+    
     public Vector3 startPos, endPos;
     public float arcHeight;
     [Range(0,1)]
@@ -14,6 +15,9 @@ public class ParabolicTrajectoryTest : MonoBehaviour
     public float throwTime;
 
     private float time;
+
+    //unrelated testing
+    public List<string> stringList;
     private void Update()
     {
         CalculatePosition();
