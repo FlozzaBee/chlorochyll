@@ -22,7 +22,11 @@ MonoBehaviour:
   - itemCode: test
     itemDisplayName: test item !
     itemPrefab: {fileID: 0}
+  - itemCode: seed:fern
+    itemDisplayName: Fern Seed
+    itemPrefab: {fileID: 0}
   itemCodes:
   - seed:willow
   - seed:oak
   - test
+  - seed:fern

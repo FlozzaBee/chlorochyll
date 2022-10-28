@@ -6,6 +6,8 @@ using UnityEngine;
 public class ParabolicTrajectoryTest : MonoBehaviour
 {
     
+
+
     public Vector3 startPos, endPos;
     public float arcHeight;
     [Range(0,1)]
@@ -18,6 +20,10 @@ public class ParabolicTrajectoryTest : MonoBehaviour
 
     //unrelated testing
     public List<string> stringList;
+    public enum EnumTest { item1, item2 };
+
+    public EnumTest test;
+    
     private void Update()
     {
         CalculatePosition();
